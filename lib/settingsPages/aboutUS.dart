@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:http/http.dart' as http;
 
 class AboutUsPage extends StatefulWidget {
   const AboutUsPage({Key? key}) : super(key: key);
@@ -12,53 +14,49 @@ class _AboutUsPageState extends State<AboutUsPage> {
   final PageController _pageController = PageController(viewportFraction: 0.88);
   int _currentPage = 0;
   List<TeamMember> teamMembers = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _initializeTeamMembers();
+    _fetchTeamMembers();
   }
 
-  void _initializeTeamMembers() {
-    teamMembers = [
-      TeamMember(
-        name: "Gojo Singh",
-        title: "Founder",
-        quote: "\"Tuesday, Thursday chod ke daily chicken.\"",
-        skills: "Non-Vegetarian,Rajput",
-        imageUrl: "https://w0.peakpx.com/wallpaper/666/961/HD-wallpaper-anime-jujutsu-kaisen-satoru-gojo.jpg",
-        videoUrl: "https://evil-bane.github.io/SRM-one-CDN/videoplayback%20(1).mp4",
-      ),
-      TeamMember(
-        name: "Sukuna Awasthi",
-        title: "Web Developer",
-        quote: "\"Bas anda khata hu\"",
-        skills: "Veg,Jati-Vadi Brahmin",
-        imageUrl: "https://i.pinimg.com/736x/87/8a/d2/878ad20c056c7629c870c63f0c13bd70.jpg",
-        videoUrl: "https://evil-bane.github.io/SRM-one-CDN/y2mate.com%20-%20Jujutsu%20Kaisen%20EditAMV%20Red%20Sex%20Sukuna_1080.mp4",
-      ),
-      TeamMember(
-        name: "ChatGPT X DeepSeek",
-        title: "Top Contributer",
-        quote: "\"Pura code mene likha h.\"",
-        skills: "Coder",
-        imageUrl: "https://c4.wallpaperflare.com/wallpaper/314/369/167/ultron-4k-hd-wallpaper-preview.jpg",
-        videoUrl: "https://evil-bane.github.io/SRM-one-CDN/gpt.mp4",
-      ),
-    ];
+  Future<void> _fetchTeamMembers() async {
+    try {
+      final response = await http.get(Uri.parse('https://api-srm-one.vercel.app/about'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        teamMembers = data.map((item) {
+          return TeamMember(
+            name: item['name'] ?? "",
+            title: item['title'] ?? "",
+            quote: item['quote'] ?? "",
+            skills: item['skills'] ?? "",
+            imageUrl: item['imageUrl'] ?? "",
+            videoUrl: item['videoUrl'] ?? "",
+          );
+        }).toList();
+      }
+    }
+    finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _handlePageChange(int index) {
     setState(() {
       _currentPage = index;
     });
-    // Pause all other videos
+    // Pause videos from all non-active members
     for (int i = 0; i < teamMembers.length; i++) {
       if (i != index && teamMembers[i].controller?.value.isPlaying == true) {
         teamMembers[i].controller?.pause();
       }
     }
-    // Play current video if initialized
+    // Play the current member's video if initialized
     if (teamMembers[index].controller?.value.isInitialized == true) {
       teamMembers[index].controller?.play();
     }
@@ -88,7 +86,9 @@ class _AboutUsPageState extends State<AboutUsPage> {
         children: [
           Container(color: Colors.black),
           SafeArea(
-            child: Column(
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator(color: Colors.white))
+                : Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -171,6 +171,15 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
   }
 
   Future<void> _initializeVideo() async {
+    // If no video URL is provided, do not attempt to initialize a video.
+    if (widget.member.videoUrl.trim().isEmpty) {
+      setState(() {
+        _isInitialized = false;
+        _hasError = true;
+      });
+      return;
+    }
+
     widget.member.controller ??= VideoPlayerController.networkUrl(
       Uri.parse(widget.member.videoUrl),
     );
@@ -190,7 +199,9 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _hasError = true);
+        setState(() {
+          _hasError = true;
+        });
       }
       print("Video error: ${e.toString()}");
     }
@@ -225,6 +236,32 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Show video background only if a non-empty URL exists and the video is properly loaded.
+    // Otherwise, display a plain black container.
+    Widget backgroundWidget;
+    if (widget.member.videoUrl.trim().isNotEmpty && _isInitialized && !_hasError) {
+      backgroundWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox.expand(
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: widget.member.controller!.value.size.width,
+              height: widget.member.controller!.value.size.height,
+              child: VideoPlayer(widget.member.controller!),
+            ),
+          ),
+        ),
+      );
+    } else {
+      backgroundWidget = Container(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(20),
+        ),
+      );
+    }
+
     return AnimatedPadding(
       duration: const Duration(milliseconds: 300),
       padding: EdgeInsets.symmetric(
@@ -243,42 +280,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
         ),
         child: Stack(
           children: [
-            // Video Background
-            if (_isInitialized && !_hasError)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: SizedBox.expand(
-                  child: FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width: widget.member.controller!.value.size.width,
-                      height: widget.member.controller!.value.size.height,
-                      child: VideoPlayer(widget.member.controller!),
-                    ),
-                  ),
-                ),
-              ),
-
-            // Loading Indicator
-            if (!_isInitialized && !_hasError)
-              const Center(child: CircularProgressIndicator(color: Colors.white)),
-
-            // Error Display
-            if (_hasError)
-              const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, color: Colors.red, size: 40),
-                    SizedBox(height: 8),
-                    Text(
-                      'Video unavailable',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-
+            backgroundWidget,
             // Content Overlay
             Container(
               decoration: BoxDecoration(
@@ -326,9 +328,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     // Member Details
                     Expanded(
                       flex: 6,
@@ -374,8 +374,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                                     color: Colors.white,
                                   ),
                                 ),
-                                backgroundColor:
-                                Colors.deepPurpleAccent.withOpacity(0.8),
+                                backgroundColor: Colors.deepPurpleAccent.withOpacity(0.8),
                               );
                             }).toList(),
                           ),
@@ -386,9 +385,8 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                 ),
               ),
             ),
-
-            // Mute Button
-            if (_isInitialized && !_hasError)
+            // Mute Button (shown only when a valid video is playing)
+            if (widget.member.videoUrl.trim().isNotEmpty && _isInitialized && !_hasError)
               Positioned(
                 top: 10,
                 right: 10,

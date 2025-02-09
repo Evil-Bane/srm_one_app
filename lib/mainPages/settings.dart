@@ -124,6 +124,11 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           buildSettingsTile(
             context,
+            icon: Icons.school,
+            title: 'College Notes',
+          ),
+          buildSettingsTile(
+            context,
             icon: Icons.support_agent,
             title: 'Support',
             routeName: '/supportPage',
@@ -171,23 +176,38 @@ class _SettingsPageState extends State<SettingsPage> {
       onTap: () {
         if (routeName != null) {
           Navigator.pushNamed(context, routeName); // Navigate to the specified route
-        } else if (title == 'Bugs? Report Here') {
-          // Handle Support button click
-          _launchSupportURL();
-        } else {
-          // Handle other actions here
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$title clicked!')),
-          );
+        }
+        else{
+          _launchSupportURL(routeName);
         }
       },
     );
   }
 
-  Future<void> _launchSupportURL() async {
-    final Uri url = Uri.parse('https://srm-one-beta.vercel.app/');
-    if (!await launchUrl(url)) {
-      throw 'Could not launch $url';
+  Future<void> _launchSupportURL(x) async {
+    if (x == 'Support'){
+      final Uri url = Uri.parse('https://srm-one.netlify.app/contact');
+      if (!await launchUrl(url)) {
+        throw 'Could not launch $url';
+      }
+    }
+    else if (x == 'Bugs? Report Here'){
+      final Uri url = Uri.parse('https://srm-one.netlify.app/contact');
+      if (!await launchUrl(url)) {
+        throw 'Could not launch $url';
+      }
+    }
+    else if (x == 'Features'){
+      final Uri url = Uri.parse('https://srm-one.netlify.app/#features');
+      if (!await launchUrl(url)) {
+        throw 'Could not launch $url';
+      }
+    }
+    else if (x == 'College Notes'){
+      final Uri url = Uri.parse('https://srm-one.netlify.app/notes');
+      if (!await launchUrl(url)) {
+        throw 'Could not launch $url';
+      }
     }
   }
 }

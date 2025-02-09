@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AccountSettings extends StatefulWidget {
   const AccountSettings({super.key});
@@ -18,17 +17,7 @@ class _AccountSettingsState extends State<AccountSettings> {
       ),
       body: ListView(
         children: [
-          _buildListItem(context, 'Change Password', '/change_Pass'),
-          TextButton(
-            onPressed: () async {
-              final Uri url = Uri.parse('https://srm-one-beta.vercel.app/');
-              await launchUrl(url);
-            },
-            child: const Text(
-              'Support',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
+          _buildListItem(context, 'Change Password', '/change_Pass1'),
         ],
       ),
     );

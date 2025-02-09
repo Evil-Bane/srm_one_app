@@ -47,25 +47,25 @@ class _HostelDetailsPageState extends State<HostelDetailsPage> {
             });
           } else {
             setState(() {
-              errorMsg = "Not Hosteller";
+              errorMsg = "Not a Hosteller";
               _isLoading = false;
             });
           }
         } else {
           setState(() {
-            errorMsg = "Not Hosteller";
+            errorMsg = "Not a Hosteller";
             _isLoading = false;
           });
         }
       } else {
         setState(() {
-          errorMsg = "Not Hosteller";
+          errorMsg = "Not a Hosteller";
           _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        errorMsg = "Not Hosteller";
+        errorMsg = "Not a Hosteller";
         _isLoading = false;
       });
     }
@@ -143,9 +143,9 @@ class _HostelDetailsPageState extends State<HostelDetailsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildDetailRow(
-                    "Hostel Name", hostelDetails!["hostelname"]),
+                    "Hostel Block", hostelDetails!["hostelname"]),
                 _buildDetailRow(
-                    "Room Name", hostelDetails!["roomname"]),
+                    "Room No.", hostelDetails!["roomname"]),
                 _buildDetailRow("Academic Year",
                     hostelDetails!["academicyear"]),
                 _buildDetailRow(
