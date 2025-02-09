@@ -91,10 +91,6 @@ class _ProvisionalResultsPageState extends State<ProvisionalResultsPage> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text(
-                    "Loading...takes some time",
-                    style: TextStyle(color: Colors.white70),
-                  ),
                 ],
               ),
             );
