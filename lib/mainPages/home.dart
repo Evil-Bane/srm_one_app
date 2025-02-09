@@ -101,7 +101,6 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
-
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -113,7 +112,6 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 15),
             const Text(
               'SRM One',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
             ),
           ],
         ),
@@ -254,8 +252,8 @@ class _HomePageState extends State<HomePage> {
                 const Icon(Icons.question_mark_sharp, color: Colors.blue)),
             _menuItem('Fees', 'Check pending dues', '/fee_details',
                 const Icon(Icons.attach_money, color: Colors.blue)),
-            _menuItem('Hostel', 'All your hostel needs', '/hostel_details',
-                const Icon(Icons.credit_card, color: Colors.blue)),
+            //_menuItem('Hostel', 'All your hostel needs', '/hostel_details',
+                //const Icon(Icons.credit_card, color: Colors.blue)),
           ],
         ),
       ),

@@ -21,7 +21,6 @@ import 'studentPortal/provisionalResults.dart';
 import 'settingsPages/aboutUS.dart';
 import 'studentPortal/hostelDetails.dart';
 
-
 void main() {
   runApp(MyApp());
 }
@@ -65,23 +64,49 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData.light().copyWith(
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.purple,  // Light theme app bar color
-          titleTextStyle: TextStyle(color: Colors.black),
-        ),
-        scaffoldBackgroundColor: Colors.white,  // Light theme background color
-        primaryColor: Colors.purple,  // Primary color for buttons, etc.
-      ),
       darkTheme: ThemeData.dark().copyWith(
+        // Set the global font for body texts
+        // (The default font family for TextStyles below will be overridden as specified.)
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.grey[900],  // Dark theme app bar color
-          titleTextStyle: TextStyle(color: Colors.white),
+          backgroundColor: Color(0xFF1A1A2E), // Dark theme app bar color
+          // Title text now uses the custom font "Lobster" with a purple-blue gradient.
+          titleTextStyle: TextStyle(
+            fontFamily: 'Lobster',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            foreground: Paint()
+              ..shader = LinearGradient(
+                colors: <Color>[Colors.purple, Colors.blueAccent],
+              ).createShader(Rect.fromLTWH(20, 0, 250, 70)),
+          ),
         ),
-        scaffoldBackgroundColor: Colors.black,  // Dark theme background color
+        scaffoldBackgroundColor: Colors.black, // Dark theme background color
         primaryColor: Color(0xFF1A1A2E), // Primary color for buttons, etc.
+        // Custom text theme using our custom fonts and the new Material 3 keys.
+        textTheme: ThemeData.dark().textTheme.copyWith(
+          displayLarge: TextStyle(
+            fontFamily: 'Lobster',
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          titleLarge: TextStyle(
+            fontFamily: 'Lobster',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          bodyLarge: TextStyle(
+            fontFamily: 'Montserrat',
+            color: Colors.white,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'Montserrat',
+            color: Colors.white70,
+          ),
+        ),
       ),
-      themeMode: ThemeMode.dark,  // Use system theme (light/dark mode)
+      themeMode: ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {

@@ -216,6 +216,7 @@ class _TimetablePageState extends State<TimetablePage> {
                           style: TextStyle(color: Colors.white, fontSize: 14),
                         ),
                       ),
+
                       title: Text(
                         subject,
                         style: TextStyle(

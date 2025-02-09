@@ -178,7 +178,7 @@ class _SettingsPageState extends State<SettingsPage> {
           Navigator.pushNamed(context, routeName); // Navigate to the specified route
         }
         else{
-          _launchSupportURL(routeName);
+          _launchSupportURL(title);
         }
       },
     );
