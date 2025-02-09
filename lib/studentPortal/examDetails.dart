@@ -27,7 +27,7 @@ class _ExamDetailsPageState extends State<ExamDetailsPage> {
       }
 
       final response = await http.post(
-        Uri.parse('https://api-srm-one.onrender.com/user'),
+        Uri.parse('https://api-srm-one.vercel.app/user'),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },

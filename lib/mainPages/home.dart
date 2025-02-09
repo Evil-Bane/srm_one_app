@@ -254,7 +254,7 @@ class _HomePageState extends State<HomePage> {
                 const Icon(Icons.question_mark_sharp, color: Colors.blue)),
             _menuItem('Fees', 'Check pending dues', '/fee_details',
                 const Icon(Icons.attach_money, color: Colors.blue)),
-            _menuItem('Hostel', 'All your hostel needs', '/no_rec',
+            _menuItem('Hostel', 'All your hostel needs', '/hostel_details',
                 const Icon(Icons.credit_card, color: Colors.blue)),
           ],
         ),

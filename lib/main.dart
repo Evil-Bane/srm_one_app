@@ -19,6 +19,7 @@ import 'studentPortal/feeDetails.dart';
 import 'studentPortal/feePaid.dart';
 import 'studentPortal/provisionalResults.dart';
 import 'settingsPages/aboutUS.dart';
+import 'studentPortal/hostelDetails.dart';
 
 
 void main() {
@@ -108,6 +109,7 @@ class _MyAppState extends State<MyApp> {
         '/fee_paid': (context) => FeePaidPage(),
         '/provisional_details': (context) => ProvisionalResultsPage(),
         '/aboutUs': (context) => AboutUsPage(),
+        '/hostel_details': (context) => HostelDetailsPage(),
       },
     );
   }

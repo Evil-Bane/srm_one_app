@@ -146,7 +146,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
         // Make the API request
         final response = await http.post(
-          Uri.parse('https://api-srm-one.onrender.com/changePassword'),
+          Uri.parse('https://api-srm-one.vercel.app/changePassword'),
           body: {
             'old': _oldPasswordController.text,
             'new': _newPasswordController.text,

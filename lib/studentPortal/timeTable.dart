@@ -48,7 +48,7 @@ class _TimetablePageState extends State<TimetablePage> {
       final sid = await UserSession.getSession();
       if (sid != null) {
         final response = await http.post(
-          Uri.parse('https://api-srm-one.onrender.com/timetable'),
+          Uri.parse('https://api-srm-one.vercel.app/timetable'),
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
@@ -64,7 +64,7 @@ class _TimetablePageState extends State<TimetablePage> {
             // For each day in the defined order, retrieve up to 7 periods.
             for (var day in dayOrder) {
               timetable[day] = List<String>.from(
-                  responseBody.containsKey(day) ? responseBody[day] : []
+                responseBody.containsKey(day) ? responseBody[day] : [],
               ).where((subject) => subject != null).take(7).toList();
             }
             _isLoading = false;
@@ -95,7 +95,7 @@ class _TimetablePageState extends State<TimetablePage> {
   /// Returns the index of the period to highlight (if any) based on current time.
   /// For periods 1 to 6, if the current time is between the period's start time and the next period's start time,
   /// it returns that period (or, if within 5 minutes of the next period, the next period).
-  /// For the last period, it now returns its index only if the current time is between its start time and 4:30 PM.
+  /// For the last period, it returns its index only if the current time is between its start time and 4:30 PM.
   int? _getCurrentPeriodIndex() {
     final now = TimeOfDay.now();
     final nowMin = _timeOfDayToMinutes(now);
@@ -125,16 +125,29 @@ class _TimetablePageState extends State<TimetablePage> {
 
   @override
   Widget build(BuildContext context) {
+    // When loading, show a scaffold with the refresh button and a CircularProgressIndicator.
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
           title: Text("Timetable"),
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                });
+                _fetchTimetable();
+              },
+            ),
+          ],
         ),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
+    // When data is loaded, show the timetable in a tab view.
     return DefaultTabController(
       initialIndex: defaultTabIndex,
       length: dayOrder.length,
@@ -142,6 +155,17 @@ class _TimetablePageState extends State<TimetablePage> {
         appBar: AppBar(
           title: Text("Timetable"),
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                });
+                _fetchTimetable();
+              },
+            ),
+          ],
           bottom: TabBar(
             isScrollable: true,
             indicatorColor: Colors.blueAccent,

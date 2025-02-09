@@ -23,7 +23,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> with SingleTickerProv
     }
 
     final response = await http.post(
-      Uri.parse('https://api-srm-one.onrender.com/user'),
+      Uri.parse('https://api-srm-one.vercel.app/user'),
       body: {
         'method': 'getPersonalDetails',
         'sid': sid,

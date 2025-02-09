@@ -56,7 +56,7 @@ class UserDetails {
   static Future<Map<String, dynamic>?> fetchAndSaveUserDetails(String sid) async {
     try {
       final response = await http.post(
-        Uri.parse('https://api-srm-one.onrender.com/user'),
+        Uri.parse('https://api-srm-one.vercel.app/user'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {'sid': sid, 'method': 'getPersonalDetails'},
       );

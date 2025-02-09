@@ -30,7 +30,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
       // Fetch subject-wise attendance
       final subjectwiseResponse = await http.post(
-        Uri.parse('https://api-srm-one.onrender.com/user'),
+        Uri.parse('https://api-srm-one.vercel.app/user'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'method': 'getSubjectwiseAttendance',
@@ -40,7 +40,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
       // Fetch cumulative (monthly) attendance data
       final cumulativeResponse = await http.post(
-        Uri.parse('https://api-srm-one.onrender.com/user'),
+        Uri.parse('https://api-srm-one.vercel.app/user'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'method': 'getCummulativeAttendance',
@@ -99,7 +99,7 @@ class _AttendancePageState extends State<AttendancePage> {
         throw Exception('No SID found. Please log in again.');
       }
       final response = await http.post(
-        Uri.parse('https://api-srm-one.onrender.com/user'),
+        Uri.parse('https://api-srm-one.vercel.app/user'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'method': 'getHourwiseAttendance',
@@ -130,6 +130,17 @@ class _AttendancePageState extends State<AttendancePage> {
       appBar: AppBar(
         title: Text("Attendance Details"),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh), // Refresh icon
+            onPressed: () {
+              // Refresh the data by calling setState
+              setState(() {
+                attendanceData = fetchAttendanceData();
+              });
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: attendanceData,
