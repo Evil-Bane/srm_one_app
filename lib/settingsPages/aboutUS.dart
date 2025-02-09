@@ -95,7 +95,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                   child: Text(
                     "About Us",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.blueAccent,
                       fontSize: 36,
                       fontFamily: 'Montserrat',
                       fontWeight: FontWeight.bold,
@@ -203,7 +203,6 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
           _hasError = true;
         });
       }
-      print("Video error: ${e.toString()}");
     }
   }
 
@@ -274,7 +273,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: Colors.deepPurpleAccent.withOpacity(0.7),
+            color: Colors.blueAccent.withOpacity(0.7),
             width: 2,
           ),
         ),
@@ -348,7 +347,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                           Text(
                             widget.member.title,
                             style: TextStyle(
-                              color: Colors.deepPurpleAccent,
+                              color: Colors.blueAccent,
                               fontSize: 18,
                               fontStyle: FontStyle.italic,
                             ),
@@ -374,7 +373,7 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                                     color: Colors.white,
                                   ),
                                 ),
-                                backgroundColor: Colors.deepPurpleAccent.withOpacity(0.8),
+                                backgroundColor: Colors.blueAccent.withOpacity(0.8),
                               );
                             }).toList(),
                           ),

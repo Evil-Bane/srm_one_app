@@ -215,7 +215,7 @@ class _FeePaidPageState extends State<FeePaidPage> {
         ],
         elevation: 0,
       ),
-      backgroundColor: Color(0xFF121212),
+
       body: FutureBuilder<List<dynamic>>(
         future: feePaidFuture,
         builder: (context, snapshot) {

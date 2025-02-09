@@ -68,16 +68,11 @@ class _MyAppState extends State<MyApp> {
         // Set the global font for body texts
         // (The default font family for TextStyles below will be overridden as specified.)
         appBarTheme: AppBarTheme(
-          backgroundColor: Color(0xFF1A1A2E), // Dark theme app bar color
-          // Title text now uses the custom font "Lobster" with a purple-blue gradient.
           titleTextStyle: TextStyle(
-            fontFamily: 'Lobster',
+            fontFamily: 'Montserrat',
             fontSize: 20,
+            color: Colors.blueAccent,
             fontWeight: FontWeight.bold,
-            foreground: Paint()
-              ..shader = LinearGradient(
-                colors: <Color>[Colors.purple, Colors.blueAccent],
-              ).createShader(Rect.fromLTWH(20, 0, 250, 70)),
           ),
         ),
         scaffoldBackgroundColor: Colors.black, // Dark theme background color
@@ -85,13 +80,13 @@ class _MyAppState extends State<MyApp> {
         // Custom text theme using our custom fonts and the new Material 3 keys.
         textTheme: ThemeData.dark().textTheme.copyWith(
           displayLarge: TextStyle(
-            fontFamily: 'Lobster',
+            fontFamily: 'Montserrat',
             fontSize: 36,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
           titleLarge: TextStyle(
-            fontFamily: 'Lobster',
+            fontFamily: 'Montserrat',
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.white,
