@@ -18,13 +18,13 @@ class _TimetablePageState extends State<TimetablePage> {
 
   // Fixed period timings for 7 periods.
   final List<TimeOfDay> periodTimes = [
-    TimeOfDay(hour: 9, minute: 20),
-    TimeOfDay(hour: 10, minute: 10),
-    TimeOfDay(hour: 11, minute: 10),
-    TimeOfDay(hour: 12, minute: 0),
-    TimeOfDay(hour: 14, minute: 0),
-    TimeOfDay(hour: 14, minute: 50),
-    TimeOfDay(hour: 15, minute: 40),
+    TimeOfDay(hour: 9, minute: 20),  // Period 1
+    TimeOfDay(hour: 10, minute: 10), // Period 2
+    TimeOfDay(hour: 11, minute: 10), // Period 3
+    TimeOfDay(hour: 12, minute: 0),  // Period 4 (ends at 12:50)
+    TimeOfDay(hour: 14, minute: 0),  // Period 5 (post-lunch)
+    TimeOfDay(hour: 14, minute: 50), // Period 6
+    TimeOfDay(hour: 15, minute: 40), // Period 7
   ];
 
   // End time for the last period (4:30 PM)
@@ -93,31 +93,55 @@ class _TimetablePageState extends State<TimetablePage> {
   int _timeOfDayToMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
 
   /// Returns the index of the period to highlight (if any) based on current time.
-  /// For periods 1 to 6, if the current time is between the period's start time and the next period's start time,
-  /// it returns that period (or, if within 5 minutes of the next period, the next period).
-  /// For the last period, it returns its index only if the current time is between its start time and 4:30 PM.
+  /// Accounts for lunch break between 12:50 PM and 2:00 PM.
   int? _getCurrentPeriodIndex() {
     final now = TimeOfDay.now();
     final nowMin = _timeOfDayToMinutes(now);
-    // Compute last period's end time in minutes.
+
+    // Define period durations (in minutes)
+    const regularPeriodDuration = 50;
+    const lunchBreakStart = TimeOfDay(hour: 12, minute: 50);
+    const lunchBreakEnd = TimeOfDay(hour: 14, minute: 0); // 2:00 PM
+
+    // Convert special times to minutes
+    final lunchStartMin = _timeOfDayToMinutes(lunchBreakStart);
+    final lunchEndMin = _timeOfDayToMinutes(lunchBreakEnd);
     final lastPeriodEndMin = _timeOfDayToMinutes(lastPeriodEnd);
+
+    // Check if we're in lunch break first
+    if (nowMin >= lunchStartMin && nowMin < lunchEndMin) {
+      return null;
+    }
+
+    // Check regular periods
     for (int i = 0; i < periodTimes.length; i++) {
       final periodStart = _timeOfDayToMinutes(periodTimes[i]);
+      int periodEnd;
+
       if (i < periodTimes.length - 1) {
-        final nextStart = _timeOfDayToMinutes(periodTimes[i + 1]);
-        if (nowMin >= periodStart && nowMin < nextStart) {
-          // If we're within 5 minutes of the next period, highlight the next period.
-          if (nowMin >= nextStart - 5) {
-            return i + 1;
-          } else {
-            return i;
-          }
+        // For periods before lunch break (period 4 ends at 12:50)
+        if (i == 3) { // 4th period (index 3)
+          periodEnd = _timeOfDayToMinutes(lunchBreakStart);
+        } else {
+          periodEnd = periodStart + regularPeriodDuration;
         }
       } else {
-        // For the last period, only highlight if now is before lastPeriodEnd.
-        if (nowMin >= periodStart && nowMin < lastPeriodEndMin) {
-          return i;
+        periodEnd = lastPeriodEndMin;
+      }
+
+      // Check if current time falls within this period
+      if (nowMin >= periodStart && nowMin < periodEnd) {
+        // Check if we're in the "preview" window for next period
+        if (i < periodTimes.length - 1) {
+          final nextPeriodStart = (i == 3) // After lunch break
+              ? _timeOfDayToMinutes(lunchBreakEnd)
+              : periodStart + regularPeriodDuration;
+
+          if (nowMin >= periodEnd - 5) { // 5 minute preview
+            return i + 1;
+          }
         }
+        return i;
       }
     }
     return null;
@@ -216,7 +240,6 @@ class _TimetablePageState extends State<TimetablePage> {
                           style: TextStyle(color: Colors.white, fontSize: 14),
                         ),
                       ),
-
                       title: Text(
                         subject,
                         style: TextStyle(
