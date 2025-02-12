@@ -67,27 +67,45 @@ class _AttendancePageState extends State<AttendancePage> {
       if (hasOdMl) {
         int retryCount = 0;
         http.Response response;
+        final credentials = await UserCredentials.getCredentials();
+        if (credentials == null) throw Exception('No credentials found');
 
+        // Try the primary API with a maximum of 3 retries for captcha error.
         do {
-          final credentials = await UserCredentials.getCredentials();
-          if (credentials == null) throw Exception('No credentials found');
-
           response = await http.post(
-            Uri.parse('https://srm-api-t1zh.onrender.com/attendanceDetailsPro'),
+            Uri.parse('https://srm-api-t1zh.onrender.com/attendanceDetails'),
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: {
               'user': credentials['email']!,
               'password': credentials['password']!,
             },
           );
-
-          if (response.body.contains('Retry....Captcha Error') && retryCount < 10) {
+          if (response.body.contains('Retry....Captcha Error') && retryCount < 3) {
             await Future.delayed(Duration(milliseconds: 200));
             retryCount++;
           } else {
             break;
           }
-        } while (retryCount < 10);
+        } while (retryCount < 3);
+
+        // If captcha error still persists after 3 attempts, switch to fallback API (with unlimited retries)
+        if (response.body.contains('Retry....Captcha Error')) {
+          do {
+            response = await http.post(
+              Uri.parse('https://srm-api-t1zh.onrender.com/attendanceDetailsPro'),
+              headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+              body: {
+                'user': credentials['email']!,
+                'password': credentials['password']!,
+              },
+            );
+            if (response.body.contains('Retry....Captcha Error')) {
+              await Future.delayed(Duration(milliseconds: 200));
+            } else {
+              break;
+            }
+          } while (true);
+        }
 
         if (response.body.contains('Login Failed')) {
           throw 'Password Changed, Login app again';
@@ -101,6 +119,7 @@ class _AttendancePageState extends State<AttendancePage> {
         );
         subjectwiseResponse = json.decode(res.body);
       }
+
 
       // Transform subject data
       List<Map<String, dynamic>> transformedSubjectwiseData = [];
@@ -366,7 +385,7 @@ class OverallStatisticsCard extends StatelessWidget {
                       if (hasOdMl)
                         Padding(
                           padding: EdgeInsets.only(top: 4),
-                          child: Text("+ ${totalOdMlHours.toStringAsFixed(1)} OD/ML hours",
+                          child: Text("+ ${totalOdMlHours.toStringAsFixed(0)} OD/ML hours",
                               style: TextStyle(
                                 color: Colors.amber,
                                 fontSize: 12,
