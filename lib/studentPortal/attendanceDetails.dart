@@ -120,7 +120,6 @@ class _AttendancePageState extends State<AttendancePage> {
         subjectwiseResponse = json.decode(res.body);
       }
 
-
       // Transform subject data
       List<Map<String, dynamic>> transformedSubjectwiseData = [];
       if (hasOdMl && subjectwiseResponse is Map && subjectwiseResponse.containsKey('course_wise_attendance')) {
@@ -162,7 +161,6 @@ class _AttendancePageState extends State<AttendancePage> {
       throw Exception('Error: ${e.toString()}');
     }
   }
-
 
   Future<List<Map<String, dynamic>>> fetchHourwiseAttendance(String monthYear) async {
     try {
@@ -520,12 +518,18 @@ class _SubjectCardState extends State<SubjectCard> {
       resultText = "No data available";
       return;
     }
-    double currentPercentage = (present / total) * 100;
+    double additional = 0;
+    if (widget.showOdMl && widget.subject.containsKey('od_ml_percentage')) {
+      double odPercentage = double.tryParse(widget.subject['od_ml_percentage']?.toString() ?? "0") ?? 0;
+      additional = (odPercentage / 100) * total;
+    }
+    double adjustedAttendance = present + additional;
+    double currentPercentage = (adjustedAttendance / total) * 100;
     if (currentPercentage >= selectedPercentage) {
-      final daysToBunk = ((100 * present - selectedPercentage * total) / selectedPercentage).floor();
+      final daysToBunk = ((100 * adjustedAttendance - selectedPercentage * total) / selectedPercentage).floor();
       resultText = "Leave => $daysToBunk Classes";
     } else {
-      final needed = ((selectedPercentage * total - 100 * present) / (100 - selectedPercentage)).ceil();
+      final needed = ((selectedPercentage * total - 100 * adjustedAttendance) / (100 - selectedPercentage)).ceil();
       resultText = "Attend => $needed Classes";
     }
   }

@@ -124,6 +124,11 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           buildSettingsTile(
             context,
+            icon: Icons.apps,
+            title: 'Features',
+          ),
+          buildSettingsTile(
+            context,
             icon: Icons.school,
             title: 'College Notes',
           ),
@@ -131,7 +136,6 @@ class _SettingsPageState extends State<SettingsPage> {
             context,
             icon: Icons.support_agent,
             title: 'Support',
-            routeName: '/supportPage',
           ),
           buildSettingsTile(
             context,
@@ -186,7 +190,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _launchSupportURL(x) async {
     if (x == 'Support'){
-      final Uri url = Uri.parse('https://srm-one.netlify.app/contact');
+      final Uri url = Uri.parse('https://chat.whatsapp.com/GERScW8Xeat4Apl3ejdxbT');
       if (!await launchUrl(url)) {
         throw 'Could not launch $url';
       }
