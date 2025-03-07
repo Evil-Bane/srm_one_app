@@ -39,7 +39,6 @@ class _ExamDetailsPageState extends State<ExamDetailsPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // If the response is a List, we assume success.
         if (data is List) {
           return data;
         } else {
@@ -83,21 +82,47 @@ class _ExamDetailsPageState extends State<ExamDetailsPage> {
               return Center(child: Text("No exam data available"));
             }
 
-            // Get distinct semesters from the API response.
+            // Extract and sort distinct semesters (ascending order)
             final semesters = examDetails
                 .map<String>((exam) => exam['semester'].toString().trim())
                 .toSet()
                 .toList();
-            // Optionally, sort the semesters numerically.
             semesters.sort((a, b) => int.parse(a).compareTo(int.parse(b)));
 
-            // If no semester has been selected yet, default to the first.
-            selectedSemester ??= semesters.first;
+            // Default to the most recent (highest) semester
+            selectedSemester ??= semesters.last;
 
-            // Filter the exam details by the selected semester.
+            // Filter exam details by the selected semester.
             final filteredExamDetails = examDetails.where((exam) {
               return exam['semester'].toString().trim() == selectedSemester;
             }).toList();
+
+            // Calculate GPA for the selected semester using your grade mapping.
+            double totalCredits = 0.0;
+            double totalPoints = 0.0;
+            final Map<String, double> gradePoints = {
+              "O": 10.0,
+              "A+": 9.0,
+              "A": 8.0,
+              "B+": 7.0,
+              "B": 6.0,
+              "C": 5.5,
+              "W": 0.0,
+              "F": 0.0,
+              "Ab": 0.0,
+              "I": 0.0,
+              "*": 0.0,
+            };
+
+            for (var exam in filteredExamDetails) {
+              double credit = double.tryParse(exam['credit']?.toString() ?? "0") ?? 0;
+              String grade = exam['grade']?.toString().trim().toUpperCase() ?? "";
+              if (gradePoints.containsKey(grade)) {
+                totalCredits += credit;
+                totalPoints += credit * gradePoints[grade]!;
+              }
+            }
+            double semesterGPA = totalCredits > 0 ? totalPoints / totalCredits : 0.0;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,7 +141,7 @@ class _ExamDetailsPageState extends State<ExamDetailsPage> {
                         padding: const EdgeInsets.only(right: 8.0),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                             backgroundColor: isSelected ? Colors.blue : Colors.grey[800],
+                            backgroundColor: isSelected ? Colors.blue : Colors.grey[800],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -136,6 +161,39 @@ class _ExamDetailsPageState extends State<ExamDetailsPage> {
                         ),
                       );
                     },
+                  ),
+                ),
+                // Display GPA for the selected semester
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Card(
+                    color: Color(0xFF1A1A2E),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Semester GPA",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            semesterGPA.toStringAsFixed(2),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 // List of exam detail cards filtered by semester
@@ -164,7 +222,7 @@ class ExamDetailCard extends StatelessWidget {
   final Map<String, dynamic> exam;
   const ExamDetailCard({Key? key, required this.exam}) : super(key: key);
 
-  /// Returns a color based on the result status.
+  // Returns a color based on the result status.
   Color getResultColor(String result) {
     if (result.toLowerCase() == 'pass') {
       return Colors.green;
@@ -176,7 +234,6 @@ class ExamDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Extract values from the exam object.
     final result = exam['result']?.toString().trim() ?? '';
     final grade = exam['grade']?.toString().trim() ?? '';
     final credit = exam['credit']?.toString().trim() ?? '';

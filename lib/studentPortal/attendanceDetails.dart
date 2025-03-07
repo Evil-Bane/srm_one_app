@@ -255,7 +255,7 @@ class AttendanceView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cumulativeAttendance = List<Map<String, dynamic>>.from(
         attendanceData['cumulative_attendance'] ?? []
-    );
+    ).reversed.toList();
     final courseWiseAttendance = List<Map<String, dynamic>>.from(
         attendanceData['course_wise_attendance'] ?? []
     );
