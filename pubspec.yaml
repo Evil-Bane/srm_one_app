@@ -2,7 +2,7 @@ name: srm_hope
 description: "A one-stop solution for all SRM IST needs."
 publish_to: 'none'
 
-version: 1.0.1+2
+version: 1.0.1+4
 
 environment:
   sdk: ^3.5.4

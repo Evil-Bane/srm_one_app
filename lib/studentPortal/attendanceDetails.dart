@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:srm_hope/Utilities/data_saver.dart'; // Your custom session/data saver
 import 'package:srm_hope/Utilities/credentials.dart'; // Adjust path as necessary
+import 'package:intl/intl.dart';
 
 // -----------------------
 // AttendancePage Widget
@@ -25,7 +26,7 @@ class _AttendancePageState extends State<AttendancePage> {
   Future<Map<String, dynamic>> fetchAttendanceData() async {
     try {
       final sid = await UserSession.getSession();
-      if (sid == null) throw Exception('No SID found. Please log in again.');
+      if (sid == null) throw Exception('Server error. Please try again later.');
 
       // Fetch cumulative data first
       final cumulativeResponse = await http.post(
@@ -35,7 +36,7 @@ class _AttendancePageState extends State<AttendancePage> {
       );
 
       if (cumulativeResponse.statusCode != 200) {
-        throw Exception('Failed to fetch cumulative data');
+        throw Exception('Server error. Please try again later.');
       }
 
       final dynamic cumulativeRaw = json.decode(cumulativeResponse.body);
@@ -48,7 +49,6 @@ class _AttendancePageState extends State<AttendancePage> {
           final oda = int.tryParse(item['odabsent']?.toString() ?? "0") ?? 0;
           final odp = int.tryParse(item['odpresent']?.toString() ?? "0") ?? 0;
           if (ml > 0 || oda > 0 || odp > 0) odMlDetected = true;
-
           return {
             'month_year': item['attendancemonthyear'],
             'present': item['present'],
@@ -59,7 +59,6 @@ class _AttendancePageState extends State<AttendancePage> {
           };
         }).toList();
       }
-
       hasOdMl = odMlDetected;
 
       // Fetch subject-wise data
@@ -68,9 +67,8 @@ class _AttendancePageState extends State<AttendancePage> {
         int retryCount = 0;
         http.Response response;
         final credentials = await UserCredentials.getCredentials();
-        if (credentials == null) throw Exception('No credentials found');
+        if (credentials == null) throw Exception('Server error. Please try again later.');
 
-        // Try the primary API with a maximum of 3 retries for captcha error.
         do {
           response = await http.post(
             Uri.parse('https://srm-api-t1zh.onrender.com/attendanceDetails'),
@@ -88,7 +86,6 @@ class _AttendancePageState extends State<AttendancePage> {
           }
         } while (retryCount < 3);
 
-        // If captcha error still persists after 3 attempts, switch to fallback API (with unlimited retries)
         if (response.body.contains('Retry....Captcha Error')) {
           do {
             response = await http.post(
@@ -99,16 +96,13 @@ class _AttendancePageState extends State<AttendancePage> {
                 'password': credentials['password']!,
               },
             );
-            if (response.body.contains('Retry....Captcha Error')) {
-              await Future.delayed(Duration(milliseconds: 200));
-            } else {
-              break;
-            }
+            if (!response.body.contains('Retry....Captcha Error')) break;
+            await Future.delayed(Duration(milliseconds: 200));
           } while (true);
         }
 
         if (response.body.contains('Login Failed')) {
-          throw 'Password Changed, Login app again';
+          throw Exception('Server error. Please try again later.');
         }
         subjectwiseResponse = json.decode(response.body);
       } else {
@@ -122,27 +116,31 @@ class _AttendancePageState extends State<AttendancePage> {
 
       // Transform subject data
       List<Map<String, dynamic>> transformedSubjectwiseData = [];
-      if (hasOdMl && subjectwiseResponse is Map && subjectwiseResponse.containsKey('course_wise_attendance')) {
-        transformedSubjectwiseData = (subjectwiseResponse['course_wise_attendance'] as List).map((item) {
-          return {
-            'code': item['code'],
-            'description': item['description'],
-            'max_hours': item['max_hours'],
-            'att_hours': item['att_hours'],
-            'total_percentage': item['total_percentage'],
-            'od_ml_percentage': item['od_ml_percentage'],
-          };
-        }).toList();
+      if (hasOdMl &&
+          subjectwiseResponse is Map &&
+          subjectwiseResponse.containsKey('course_wise_attendance')) {
+        transformedSubjectwiseData =
+            (subjectwiseResponse['course_wise_attendance'] as List).map((item) {
+              return {
+                'code': item['code'],
+                'description': item['description'],
+                'max_hours': item['max_hours'],
+                'att_hours': item['att_hours'],
+                'total_percentage': item['total_percentage'],
+                'od_ml_percentage': item['od_ml_percentage'],
+              };
+            }).toList();
       } else if (subjectwiseResponse is List) {
-        transformedSubjectwiseData = subjectwiseResponse.map<Map<String, dynamic>>((item) {
-          return {
-            'code': item['subjectcode'],
-            'description': item['subjectdesc'],
-            'max_hours': item['total'],
-            'att_hours': item['present'],
-            'total_percentage': item['presentpercentage'],
-          };
-        }).toList();
+        transformedSubjectwiseData =
+            subjectwiseResponse.map<Map<String, dynamic>>((item) {
+              return {
+                'code': item['subjectcode'],
+                'description': item['subjectdesc'],
+                'max_hours': item['total'],
+                'att_hours': item['present'],
+                'total_percentage': item['presentpercentage'],
+              };
+            }).toList();
       }
 
       return {
@@ -151,46 +149,31 @@ class _AttendancePageState extends State<AttendancePage> {
         'course_wise_attendance': transformedSubjectwiseData,
       };
     } catch (e) {
-      if (e.toString().contains('Password Changed')) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Password Changed, Login app again")),
-          );
-        });
-      }
-      throw Exception('Error: ${e.toString()}');
+      throw Exception('Server error. Please try again later.');
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchHourwiseAttendance(String monthYear) async {
     try {
       final sid = await UserSession.getSession();
-      if (sid == null) {
-        throw Exception('No SID found. Please log in again.');
-      }
+      if (sid == null) throw Exception('Server error. Please try again later.');
       final response = await http.post(
         Uri.parse('https://api-srm-one.vercel.app/user'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'method': 'getHourwiseAttendance',
-          'sid': sid,
-        },
+        body: {'method': 'getHourwiseAttendance', 'sid': sid},
       );
       if (response.statusCode == 200) {
         List<dynamic> allData = json.decode(response.body);
-        // Filter the data for the selected month (e.g. "Jan-2025")
         final parts = monthYear.split('-');
         final month = parts[0];
-        final monthData = allData.where((item) {
-          final date = item['attendancedate'] as String;
-          return date.contains(month);
-        }).toList();
+        final monthData =
+        allData.where((item) => (item['attendancedate'] as String).contains(month)).toList();
         return List<Map<String, dynamic>>.from(monthData);
       } else {
-        throw Exception('Failed to fetch hourwise attendance data');
+        throw Exception('Server error. Please try again later.');
       }
     } catch (error) {
-      throw Exception('Error fetching hourwise attendance data: $error');
+      throw Exception('Server error. Please try again later.');
     }
   }
 
@@ -210,21 +193,14 @@ class _AttendancePageState extends State<AttendancePage> {
       body: FutureBuilder<Map<String, dynamic>>(
         future: attendanceData,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting)
             return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            if (snapshot.error.toString().contains('Password Changed')) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Password Changed, Login app again")),
-                );
-              });
-            }
-            return Center(child: Text("Error: ${snapshot.error}", style: TextStyle(color: Colors.red)));
-          }
-          if (!snapshot.hasData) return Center(child: Text("No data available"));
-
+          if (snapshot.hasError)
+            return Center(
+                child: Text("Server error. Please try again later.",
+                    style: TextStyle(color: Colors.red)));
+          if (!snapshot.hasData)
+            return Center(child: Text("No data available"));
           final data = snapshot.data!;
           return AttendanceView(
             attendanceData: data,
@@ -238,7 +214,7 @@ class _AttendancePageState extends State<AttendancePage> {
 }
 
 // -----------------------
-// Revised AttendanceView Widget
+// AttendanceView Widget
 // -----------------------
 class AttendanceView extends StatelessWidget {
   final Map<String, dynamic> attendanceData;
@@ -254,11 +230,11 @@ class AttendanceView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cumulativeAttendance = List<Map<String, dynamic>>.from(
-        attendanceData['cumulative_attendance'] ?? []
-    ).reversed.toList();
-    final courseWiseAttendance = List<Map<String, dynamic>>.from(
-        attendanceData['course_wise_attendance'] ?? []
-    );
+        attendanceData['cumulative_attendance'] ?? [])
+        .reversed
+        .toList();
+    final courseWiseAttendance =
+    List<Map<String, dynamic>>.from(attendanceData['course_wise_attendance'] ?? []);
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
@@ -267,7 +243,8 @@ class AttendanceView extends StatelessWidget {
         children: [
           OverallStatisticsCard(courseWiseAttendance: courseWiseAttendance, hasOdMl: hasOdMl),
           SizedBox(height: 20),
-          Text('Monthly Summary', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue)),
+          Text('Monthly Summary',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue)),
           SizedBox(height: 12),
           SizedBox(
             height: 170,
@@ -282,7 +259,8 @@ class AttendanceView extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-          Text('Subject-wise Attendance', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue)),
+          Text('Subject-wise Attendance',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue)),
           SizedBox(height: 12),
           ListView.builder(
             shrinkWrap: true,
@@ -300,7 +278,7 @@ class AttendanceView extends StatelessWidget {
 }
 
 // -----------------------
-// OverallStatisticsCard Widget (Revised)
+// OverallStatisticsCard Widget
 // -----------------------
 class OverallStatisticsCard extends StatelessWidget {
   final List<Map<String, dynamic>> courseWiseAttendance;
@@ -313,22 +291,18 @@ class OverallStatisticsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate base statistics
     final int totalMax = courseWiseAttendance.fold(0,
             (sum, item) => sum + (int.tryParse(item['max_hours']?.toString() ?? "0") ?? 0));
-
     final int totalAtt = courseWiseAttendance.fold(0,
             (sum, item) => sum + (int.tryParse(item['att_hours']?.toString() ?? "0") ?? 0));
-
-    // Calculate OD/ML adjusted statistics
-    final double totalOdMlHours = courseWiseAttendance.fold(0.0,
-            (sum, item) => sum + ((double.tryParse(item['od_ml_percentage']?.toString() ?? "0") ?? 0) / 100) *
-            (int.tryParse(item['max_hours']?.toString() ?? "0") ?? 0));
-
-    // Calculate percentages
+    final double totalOdMlHours = courseWiseAttendance.fold(
+        0.0,
+            (sum, item) =>
+        sum +
+            ((double.tryParse(item['od_ml_percentage']?.toString() ?? "0") ?? 0) / 100) *
+                (int.tryParse(item['max_hours']?.toString() ?? "0") ?? 0));
     final double basePercentage = totalMax > 0 ? (totalAtt / totalMax * 100) : 0;
-    final double adjustedPercentage = totalMax > 0 ?
-    ((totalAtt + totalOdMlHours) / totalMax * 100) : 0;
+    final double adjustedPercentage = totalMax > 0 ? ((totalAtt + totalOdMlHours) / totalMax * 100) : 0;
 
     return Card(
       color: Color(0xFF1A1A2E),
@@ -340,7 +314,6 @@ class OverallStatisticsCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Progress Indicator Container
                 Container(
                   width: 60,
                   height: 60,
@@ -358,10 +331,7 @@ class OverallStatisticsCard extends StatelessWidget {
                       Text(
                         '${adjustedPercentage.toStringAsFixed(1)}%',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 12
-                        ),
+                            fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
                       ),
                     ],
                   ),
@@ -373,10 +343,7 @@ class OverallStatisticsCard extends StatelessWidget {
                     children: [
                       Text("Overall Attendance",
                           style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue
-                          )),
+                              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
                       SizedBox(height: 4),
                       Text("Attended: $totalAtt / $totalMax hours",
                           style: TextStyle(color: Colors.white, fontSize: 14)),
@@ -384,10 +351,7 @@ class OverallStatisticsCard extends StatelessWidget {
                         Padding(
                           padding: EdgeInsets.only(top: 4),
                           child: Text("+ ${totalOdMlHours.toStringAsFixed(0)} OD/ML hours",
-                              style: TextStyle(
-                                color: Colors.amber,
-                                fontSize: 12,
-                              )),
+                              style: TextStyle(color: Colors.amber, fontSize: 12)),
                         ),
                     ],
                   ),
@@ -408,10 +372,8 @@ class OverallStatisticsCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 8),
-                    Text(
-                      'Base ${basePercentage.toStringAsFixed(1)}%',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
+                    Text('Base ${basePercentage.toStringAsFixed(1)}%',
+                        style: TextStyle(color: Colors.white70, fontSize: 12)),
                   ],
                 ),
               ),
@@ -423,7 +385,7 @@ class OverallStatisticsCard extends StatelessWidget {
 }
 
 // -----------------------
-// Revised MonthCard Widget
+// MonthCard Widget
 // -----------------------
 class MonthCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -468,7 +430,8 @@ class MonthCard extends StatelessWidget {
               LinearProgressIndicator(
                 value: ratio,
                 backgroundColor: Colors.grey,
-                valueColor: AlwaysStoppedAnimation<Color>(ratio >= 0.75 ? Colors.green : Colors.red),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                    ratio >= 0.75 ? Colors.green : Colors.red),
               ),
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: 100),
@@ -489,7 +452,7 @@ class MonthCard extends StatelessWidget {
 }
 
 // -----------------------
-// Revised SubjectCard Widget
+// SubjectCard Widget
 // -----------------------
 class SubjectCard extends StatefulWidget {
   final Map<String, dynamic> subject;
@@ -545,10 +508,8 @@ class _SubjectCardState extends State<SubjectCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.subject['description'] ?? "",
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            Text(widget.subject['description'] ?? "",
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
             SizedBox(height: 4),
             Text("Code: ${widget.subject['code']}", style: TextStyle(color: Colors.white70)),
             SizedBox(height: 12),
@@ -613,6 +574,9 @@ class _SubjectCardState extends State<SubjectCard> {
   }
 }
 
+// -----------------------
+// HourlyAttendanceView Widget
+// -----------------------
 class HourlyAttendanceView extends StatefulWidget {
   final String monthYear;
   final Future<List<Map<String, dynamic>>> Function(String monthYear) fetchHourwiseAttendance;
@@ -631,7 +595,6 @@ class _HourlyAttendanceViewState extends State<HourlyAttendanceView> {
     hourwiseData = widget.fetchHourwiseAttendance(widget.monthYear);
   }
 
-  // Helper: Returns a color based on the status value.
   Color getAttendanceColor(String status) {
     status = status.trim();
     if (status == 'P') return Colors.green;
@@ -639,9 +602,30 @@ class _HourlyAttendanceViewState extends State<HourlyAttendanceView> {
     return Colors.grey;
   }
 
+  String getDayOfWeek(String dateStr) {
+    if (dateStr.isEmpty) return '';
+    List<String> formats = [
+      "dd-MMM-yyyy", // e.g., 28-Feb-2025
+      "yyyy-MM-dd",
+      "dd-MM-yyyy",
+      "dd/MM/yyyy",
+      "dd MMM yyyy",
+      "MMM dd, yyyy",
+      "yyyy/MM/dd"
+    ];
+    for (var fmt in formats) {
+      try {
+        DateTime date = DateFormat(fmt).parse(dateStr);
+        return DateFormat('EEE').format(date);
+      } catch (e) {
+        continue;
+      }
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // We use a SingleChildScrollView for vertical scrolling in case of many rows.
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -651,7 +635,9 @@ class _HourlyAttendanceViewState extends State<HourlyAttendanceView> {
             if (snapshot.connectionState == ConnectionState.waiting)
               return Center(child: CircularProgressIndicator());
             else if (snapshot.hasError)
-              return Center(child: Text("Error: ${snapshot.error}", style: TextStyle(color: Colors.red)));
+              return Center(
+                  child: Text("Server error. Please try again later.",
+                      style: TextStyle(color: Colors.red)));
             else if (!snapshot.hasData || snapshot.data!.isEmpty)
               return Center(child: Text("No attendance data available", style: TextStyle(color: Colors.white)));
             final data = snapshot.data!;
@@ -685,7 +671,10 @@ class _HourlyAttendanceViewState extends State<HourlyAttendanceView> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text(dayData['attendancedate'] ?? '', style: TextStyle(fontSize: 14)),
+                      child: Text(
+                        "${dayData['attendancedate'] ?? ''} (${getDayOfWeek(dayData['attendancedate'] ?? '')})",
+                        style: TextStyle(fontSize: 14),
+                      ),
                     ),
                     ...List.generate(7, (index) {
                       final status = dayData['h${index + 1}']?.toString() ?? 'null';

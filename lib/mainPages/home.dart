@@ -93,6 +93,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive scaling
+    final double screenWidth = MediaQuery.of(context).size.width;
+    // Use 400 as the base width for scaling; adjust as needed
+    final double scale = screenWidth / 400;
+
     // Show loading screen if data is loading or null
     if (isLoading && isInitialLoad) {
       return const Scaffold(
@@ -107,11 +112,12 @@ class _HomePageState extends State<HomePage> {
           children: [
             Image.asset(
               'assets/images/app_logo.png',
-              height: 60,
+              height: 60 * scale,
             ),
-            const SizedBox(width: 15),
-            const Text(
+            SizedBox(width: 15 * scale),
+            Text(
               'SRM One',
+              style: TextStyle(fontSize: 20 * scale),
             ),
           ],
         ),
@@ -137,123 +143,173 @@ class _HomePageState extends State<HomePage> {
                 elevation: 16,
                 child: Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.all(16.0),
-                  padding: const EdgeInsets.all(16.0),
+                  margin: EdgeInsets.all(16.0 * scale),
+                  padding: EdgeInsets.all(16.0 * scale),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1A2E),
-                    borderRadius: BorderRadius.circular(16.0),
-                    border: Border.all(color: Colors.black, width: 2),
-                    boxShadow: const [
+                    borderRadius: BorderRadius.circular(16.0 * scale),
+                    border: Border.all(color: Colors.black, width: 2 * scale),
+                    boxShadow: [
                       BoxShadow(
                         color: Colors.blue,
-                        blurRadius: 10,
-                        spreadRadius: 10,
+                        blurRadius: 10 * scale,
+                        spreadRadius: 10 * scale,
                       ),
                     ],
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Profile Picture
                       CircleAvatar(
-                        radius: 50,
+                        radius: 50 * scale,
                         backgroundColor: Colors.black,
                         backgroundImage: _decodeBase64Image(
                           userDetails?['studentphoto'],
                         ),
-                        child: userDetails == null ||
+                        child: (userDetails == null ||
                             userDetails!['studentphoto'] == null ||
-                            userDetails!['studentphoto']!.isEmpty
-                            ? const Icon(
+                            userDetails!['studentphoto']!.isEmpty)
+                            ? Icon(
                           Icons.person,
-                          size: 100,
+                          size: 100 * scale,
                         )
                             : null,
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10 * scale),
                       // Profile Name
-                      Text(
-                        userDetails?['studentname'] ?? 'Unknown User',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          userDetails?['studentname'] ?? 'Unknown User',
+                          style: TextStyle(
+                            fontSize: 20 * scale,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-
+                      SizedBox(height: 5 * scale),
                       // Registration No.
-                      Text(
-                        userDetails?['registerno'] ?? 'No Info',
-                        style: const TextStyle(
-                          fontSize: 14,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          userDetails?['registerno'] ?? 'No Info',
+                          style: TextStyle(
+                            fontSize: 14 * scale,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      SizedBox(height: 10 * scale),
+                      // Using a Row to ensure the info stays in one line.
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Column(
-                            children: [
-                              const Icon(
-                                Icons.cake,
-                                size: 30,
-                                color: Colors.blue,
-                              ),
-                              Text(userDetails?['dob'] ?? 'N/A')
-                            ],
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.cake,
+                                  size: 30 * scale,
+                                  color: Colors.blue,
+                                ),
+                                SizedBox(height: 4 * scale),
+                                Text(
+                                  userDetails?['dob'] ?? 'N/A',
+                                  style: TextStyle(fontSize: 14 * scale),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 35),
-                          Column(
-                            children: [
-                              const Icon(
-                                Icons.school,
-                                size: 30,
-                                color: Colors.blue,
-                              ),
-                              Text(userDetails?['semester'] ?? 'N/A')
-                            ],
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.school,
+                                  size: 30 * scale,
+                                  color: Colors.blue,
+                                ),
+                                SizedBox(height: 4 * scale),
+                                Text(
+                                  userDetails?['semester'] ?? 'N/A',
+                                  style: TextStyle(fontSize: 14 * scale),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 35),
-                          Column(
-                            children: [
-                              const Icon(
-                                Icons.menu_book_rounded,
-                                size: 30,
-                                color: Colors.blue,
-                              ),
-                              Text(
-                                  'Section: ${userDetails?['sectiondesc'] ?? 'N/A'}'),
-                            ],
-                          )
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.menu_book_rounded,
+                                  size: 30 * scale,
+                                  color: Colors.blue,
+                                ),
+                                SizedBox(height: 4 * scale),
+                                Text(
+                                  'Section: ${userDetails?['sectiondesc'] ?? 'N/A'}',
+                                  style: TextStyle(fontSize: 14 * scale),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
             // Heading
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0 * scale, vertical: 8.0 * scale),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   "Menu",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18 * scale, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
             // Menu Items
-            _menuItem('Attendance', 'View your attendance', '/attendance_details',
-                const Icon(Icons.data_thresholding_outlined, color: Colors.blue)),
-            _menuItem('Grades', 'Check your grades', '/grades_details',
-                const Icon(Icons.grade, color: Colors.blue)),
-            _menuItem('Time Table', 'View class schedule', '/time_table',
-                const Icon(Icons.table_view, color: Colors.blue)),
-            _menuItem('GPA Calculator', 'Calculate your GPA', '/gpa_calc',
-                const Icon(Icons.question_mark_sharp, color: Colors.blue)),
-            _menuItem('Fees', 'Check pending dues', '/fee_details',
-                const Icon(Icons.attach_money, color: Colors.blue)),
-            //_menuItem('Hostel', 'All your hostel needs', '/hostel_details',
-                //const Icon(Icons.credit_card, color: Colors.blue)),
+            _menuItem(
+              'Attendance',
+              'View your attendance',
+              '/attendance_details',
+              Icon(Icons.data_thresholding_outlined, color: Colors.blue, size: 24 * scale),
+            ),
+            _menuItem(
+              'Grades',
+              'Check your grades',
+              '/grades_details',
+              Icon(Icons.grade, color: Colors.blue, size: 24 * scale),
+            ),
+            _menuItem(
+              'Time Table',
+              'View class schedule',
+              '/time_table',
+              Icon(Icons.table_view, color: Colors.blue, size: 24 * scale),
+            ),
+            _menuItem(
+              'GPA Calculator',
+              'Calculate your GPA',
+              '/gpa_calc',
+              Icon(Icons.question_mark_sharp, color: Colors.blue, size: 24 * scale),
+            ),
+            _menuItem(
+              'Fees',
+              'Check pending dues',
+              '/fee_details',
+              Icon(Icons.attach_money, color: Colors.blue, size: 24 * scale),
+            ),
           ],
         ),
       ),
@@ -262,21 +318,21 @@ class _HomePageState extends State<HomePage> {
         selectedItemColor: Colors.white,
         currentIndex: _currentIndex,
         onTap: _navigateToPage, // Use the function to navigate
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.home, size: 24 * scale),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.event),
+            icon: Icon(Icons.event, size: 24 * scale),
             label: 'Events',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.groups),
+            icon: Icon(Icons.groups, size: 24 * scale),
             label: 'Groups',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.contacts),
+            icon: Icon(Icons.contacts, size: 24 * scale),
             label: 'Directory',
           ),
         ],

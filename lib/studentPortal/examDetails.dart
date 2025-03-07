@@ -97,9 +97,10 @@ class _ExamDetailsPageState extends State<ExamDetailsPage> {
               return exam['semester'].toString().trim() == selectedSemester;
             }).toList();
 
-            // Calculate GPA for the selected semester using your grade mapping.
+            // Calculate GPA for the selected semester.
             double totalCredits = 0.0;
             double totalPoints = 0.0;
+            // Updated grade mapping; note that any 0-credit subject is ignored.
             final Map<String, double> gradePoints = {
               "O": 10.0,
               "A+": 9.0,
@@ -109,18 +110,19 @@ class _ExamDetailsPageState extends State<ExamDetailsPage> {
               "C": 5.5,
               "W": 0.0,
               "F": 0.0,
-              "Ab": 0.0,
+              "AB": 0.0,
               "I": 0.0,
               "*": 0.0,
             };
 
             for (var exam in filteredExamDetails) {
-              double credit = double.tryParse(exam['credit']?.toString() ?? "0") ?? 0;
-              String grade = exam['grade']?.toString().trim().toUpperCase() ?? "";
-              if (gradePoints.containsKey(grade)) {
-                totalCredits += credit;
-                totalPoints += credit * gradePoints[grade]!;
-              }
+              final creditStr = exam['credit']?.toString().trim() ?? "";
+              final gradeStr = exam['grade']?.toString().trim().toUpperCase() ?? "";
+              if (creditStr.isEmpty || !gradePoints.containsKey(gradeStr)) continue;
+              final credit = double.tryParse(creditStr);
+              if (credit == null || credit == 0) continue; // Skip 0 credit subjects
+              totalCredits += credit;
+              totalPoints += credit * gradePoints[gradeStr]!;
             }
             double semesterGPA = totalCredits > 0 ? totalPoints / totalCredits : 0.0;
 
