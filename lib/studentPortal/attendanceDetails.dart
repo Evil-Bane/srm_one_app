@@ -67,7 +67,7 @@ class _AttendancePageState extends State<AttendancePage> {
         int retryCount = 0;
         http.Response response;
         final credentials = await UserCredentials.getCredentials();
-        if (credentials == null) throw Exception('Server error. Please try again later.');
+        if (credentials == null) throw Exception('Login Again.');
 
         do {
           response = await http.post(
@@ -78,13 +78,15 @@ class _AttendancePageState extends State<AttendancePage> {
               'password': credentials['password']!,
             },
           );
-          if (response.body.contains('Retry....Captcha Error') && retryCount < 3) {
-            await Future.delayed(Duration(milliseconds: 200));
+          if (response.body.contains('Retry....Captcha Error') && retryCount < 2) {
+            await Future.delayed(Duration(milliseconds: 100));
             retryCount++;
-          } else {
+          }
+
+          else {
             break;
           }
-        } while (retryCount < 3);
+        } while (retryCount < 2);
 
         if (response.body.contains('Retry....Captcha Error')) {
           do {
@@ -101,8 +103,23 @@ class _AttendancePageState extends State<AttendancePage> {
           } while (true);
         }
 
+        if (response.body.contains('Retry....Timeout Error')) {
+          do {
+            response = await http.post(
+              Uri.parse('https://srm-api-t1zh.onrender.com/attendanceDetailsPro'),
+              headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+              body: {
+                'user': credentials['email']!,
+                'password': credentials['password']!,
+              },
+            );
+            if (!response.body.contains('Retry....Captcha Error')) break;
+            await Future.delayed(Duration(milliseconds: 200));
+          } while (true);
+        }
+
         if (response.body.contains('Login Failed')) {
-          throw Exception('Server error. Please try again later.');
+          throw Exception('Login Again.');
         }
         subjectwiseResponse = json.decode(response.body);
       } else {
