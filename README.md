@@ -1,16 +1,28 @@
-# srm_one
+🎓 SRM One
 
-A new Flutter project.
+A Flutter mobile application designed for SRM University students.
+SRM One provides a seamless student experience with a secure login portal and easy access to attendance, academic stats, and more — all in one place.
 
-## Getting Started
+🚀 Features
 
-This project is a starting point for a Flutter application.
+🔐 Login Portal – Secure authentication for students.
 
-A few resources to get you started if this is your first Flutter project:
+📊 Attendance Tracking – Subject-wise attendance at a glance.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+🎓 Student Stats – View academic performance, grades, timetable, and other stats.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+📰 Notices & Announcements (if implemented).
+
+📱 Cross-platform – Runs on both Android & iOS.
+
+🛠️ Tech Stack
+
+Framework: Flutter
+
+Language: Dart
+
+State Management: Provider / Riverpod / GetX (update based on what you used)
+
+Backend / API: [Your API / Firebase / College server integration]
+
+Authentication: [Firebase Auth / Custom SRM API]
